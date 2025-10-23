@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PWA Cache Löscher</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-gray-900 text-white min-h-screen flex items-center justify-center p-4">
+
+    <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl max-w-lg w-full border border-indigo-500">
+        <h1 class="text-3xl font-bold text-center text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-cyan-400 mb-6">
+            PWA Cache-Problembehandlung
+        </h1>
+        
+        <p class="text-gray-400 text-center mb-8">
+            Dieses Werkzeug löscht alle alten Service Worker und Caches für diese Website. Es zwingt deinen Browser, die App komplett neu zu laden.
+        </p>
+
+        <button id="clearCacheButton" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-6 rounded-lg text-lg transition-all duration-300 shadow-lg hover:shadow-indigo-500/50">
+            <span id="buttonText">Cache leeren & App neu starten</span>
+            <span id="buttonSpinner" class="hidden">
+                <svg class="animate-spin h-5 w-5 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+            </span>
+        </button>
+
+        <div id="statusLog" class="mt-8 bg-gray-900 border border-gray-700 rounded-lg p-4 h-48 overflow-y-auto text-sm text-gray-400 font-mono space-y-2">
+            <p>Warte auf Aktion...</p>
+        </div>
+    </div>
+
+    <script>
+        const clearCacheButton = document.getElementById('clearCacheButton');
+        const buttonText = document.getElementById('buttonText');
+        const buttonSpinner = document.getElementById('buttonSpinner');
+        const statusLog = document.getElementById('statusLog');
+
+        // Funktion zum Protokollieren von Nachrichten
+        function log(message) {
+            console.log(message);
+            statusLog.innerHTML += `<p class="text-green-400">> ${message}</p>`;
+            statusLog.scrollTop = statusLog.scrollHeight; // Ans Ende scrollen
+        }
+
+        // Funktion zum Protokollieren von Fehlern
+        function logError(message) {
+            console.error(message);
+            statusLog.innerHTML += `<p class="text-red-400">> FEHLER: ${message}</p>`;
+            statusLog.scrollTop = statusLog.scrollHeight;
+        }
+
+        clearCacheButton.addEventListener('click', async () => {
+            clearCacheButton.disabled = true;
+            buttonText.classList.add('hidden');
+            buttonSpinner.classList.remove('hidden');
+            statusLog.innerHTML = '<p>Starte Vorgang...</p>';
+
+            try {
+                // Schritt 1: Alle Service Worker deregistrieren
+                log('Suche nach alten Service Workern...');
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    if (registrations.length === 0) {
+                        log('Keine aktiven Service Worker gefunden.');
+                    } else {
+                        for (const registration of registrations) {
+                            await registration.unregister();
+                            log(`Service Worker [${registration.scope}] erfolgreich deregistriert.`);
+                        }
+                    }
+                } else {
+                    log('Service Worker werden von diesem Browser nicht unterstützt.');
+                }
+
+                // Schritt 2: Alle PWA-Caches löschen
+                log('Suche nach alten Caches...');
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    if (cacheNames.length === 0) {
+                        log('Keine PWA-Caches gefunden.');
+                    } else {
+                        for (const cacheName of cacheNames) {
+                            await caches.delete(cacheName);
+                            log(`Cache [${cacheName}] erfolgreich gelöscht.`);
+                        }
+                    }
+                } else {
+                    log('Cache API wird nicht unterstützt.');
+                }
+
+                log('Bereinigung abgeschlossen!');
+                log('Leite zur Haupt-App mit Cache-Buster weiter...');
+
+                // Schritt 3: Zur Hauptseite weiterleiten MIT einem Cache-Buster
+                // Dies zwingt den Browser, 'index.html' neu vom Server zu laden.
+                setTimeout(() => {
+                    // './' bezieht sich auf das aktuelle Verzeichnis ('/Diff-Patch-Tool/')
+                    window.location.href = './index.html?v=' + Date.now();
+                }, 2000);
+
+            } catch (error) {
+                logError(error.message);
+                buttonText.classList.remove('hidden');
+                buttonSpinner.classList.add('hidden');
+                clearCacheButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>
+
