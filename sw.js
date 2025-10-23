@@ -1,38 +1,60 @@
-const CN = 'pwa-cache-v1';
+const CACHE_VERSION = 'v4';
+const CACHE_NAME = `pwa-cache-${CACHE_VERSION}`;
+const OFFLINE_URL = './offline.html';
 
-const URLS = [
-    // Deine App-Dateien
-    "/Diff-Patch-Tool/",
-    "/Diff-Patch-Tool/index.html",
-    "/Diff-Patch-Tool/manifest.json",
-    "/Diff-Patch-Tool/offline.html",
-    "/Diff-Patch-Tool/icons/icon-192x192.png",
-    "/Diff-Patch-Tool/icons/icon-512x512.png",
-    
-    // Hinzugefügte externe Ressourcen (CDNs)
-    "https://cdn.tailwindcss.com",
-    "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
-    "https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"
+const ASSETS = [
+  './',
+  './index.html',
+  './manifest.json',
+  './offline.html'
 ];
 
-self.addEventListener('install', e => {
-    e.waitUntil(
-        caches.open(CN).then(c => {
-            console.log('Caching PWA assets...');
-            return c.addAll(URLS);
-        })
-    );
+self.addEventListener('install', event => {
+  console.log('[SW] Installiere Version', CACHE_VERSION);
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => cache.addAll(ASSETS))
+      .then(() => self.skipWaiting())
+  );
 });
 
-self.addEventListener('fetch', e => {
-    e.respondWith(
-        caches.match(e.request).then(r => {
-            // Wenn im Cache gefunden, zurückgeben.
-            // Sonst vom Netzwerk holen (und ggf. cachen).
-            return r || fetch(e.request);
-        }).catch(() => {
-            // Bei Fehler (z.B. offline) die Offline-Seite anzeigen
-            return caches.match("/Diff-Patch-Tool/offline.html");
+self.addEventListener('activate', event => {
+  console.log('[SW] Aktiviere neue Version:', CACHE_VERSION);
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(
+        keys.map(key => {
+          if (key !== CACHE_NAME) {
+            console.log('[SW] Lösche alten Cache:', key);
+            return caches.delete(key);
+          }
         })
-    );
+      )
+    ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', event => {
+  if (event.request.method !== 'GET') return;
+  event.respondWith(
+    caches.match(event.request).then(response => {
+      const fetchPromise = fetch(event.request)
+        .then(networkResponse => {
+          if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
+            const clone = networkResponse.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          }
+          return networkResponse;
+        })
+        .catch(() => caches.match(OFFLINE_URL));
+      return response || fetchPromise;
+    })
+  );
+});
+
+self.addEventListener('message', event => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    console.log('[SW] Überspringe Warten – aktiviere sofort');
+    self.skipWaiting();
+  }
 });
