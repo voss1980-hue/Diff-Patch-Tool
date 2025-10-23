@@ -385,8 +385,6 @@
             if (!originalEditor) return;
             const codeToCopy = originalEditor.getValue();
             
-            // Ich habe den Kopiervorgang hier korrigiert, da er 
-            // in deiner Originaldatei unvollständig war.
             if (codeToCopy) {
                 navigator.clipboard.writeText(codeToCopy).then(() => {
                     console.log('Original-Code kopiert!');
@@ -396,7 +394,6 @@
             }
         });
     </script>
-
     <script>
         if ('serviceWorker' in navigator) {
             // Der Pfad ist '/Diff-Patch-Tool/sw.js', basierend auf deiner URL
@@ -409,6 +406,13 @@
                     })
                     .catch(error => {
                         console.log('PWA Service Worker Registrierung fehlgeschlagen:', error);
+                    });
+            });
+        }
+    </script>
+    </body>
+</html>
+r Registrierung fehlgeschlagen:', error);
                     });
             });
         }
