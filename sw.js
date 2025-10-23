@@ -1,8 +1,9 @@
-const CACHE_VERSION = 'v4';
+// WICHTIG: Version auf v5 erhöht, um ein Update zu erzwingen
+const CACHE_VERSION = 'v5';
 const CACHE_NAME = `pwa-cache-${CACHE_VERSION}`;
 const OFFLINE_URL = './offline.html';
 
-// WICHTIG: Die Assets der App (CDNs) müssen hier rein!
+// WICHTIG: Die Assets der App (CDNs) müssen hier rein
 const ASSETS = [
   './',
   './index.html',
@@ -11,7 +12,7 @@ const ASSETS = [
   './icons/icon-192x192.png',
   './icons/icon-512x512.png',
   
-  // Die App-Abhängigkeiten (CDNs):
+  // Die App-Abhängigkeiten (CDNs) - JETZT NICHT MEHR AUSKOMMENTIERT
   'https://cdn.tailwindcss.com',
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap',
   'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js'
@@ -21,7 +22,11 @@ self.addEventListener('install', event => {
   console.log('[SW] Installiere Version', CACHE_VERSION);
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(ASSETS))
+      .then(cache => {
+        console.log('[SW] Caching assets:', ASSETS);
+        // Wir verwenden addAll, um alle Assets auf einmal zu cachen
+        return cache.addAll(ASSETS);
+      })
       .then(() => self.skipWaiting())
   );
 });
@@ -44,13 +49,21 @@ self.addEventListener('activate', event => {
 
 self.addEventListener('fetch', event => {
   if (event.request.method !== 'GET') return;
+
+  // Strategie: Cache First, dann Netzwerk
   event.respondWith(
     caches.match(event.request).then(response => {
+      // Aus Cache gefunden
+      if (response) {
+        return response;
+      }
+
+      // Nicht im Cache, also vom Netzwerk holen
       const fetchPromise = fetch(event.request)
         .then(networkResponse => {
           // Prüfen, ob die Antwort gültig ist
           if (networkResponse && networkResponse.status === 200) {
-            // 'basic' (eigene Domain) ODER 'cors' (für CDNs) cachen
+            // Nur 'basic' (eigene Domain) ODER 'cors' (für CDNs) cachen
             if (networkResponse.type === 'basic' || networkResponse.type === 'cors') {
               const clone = networkResponse.clone();
               caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
@@ -58,9 +71,12 @@ self.addEventListener('fetch', event => {
           }
           return networkResponse;
         })
-        .catch(() => caches.match(OFFLINE_URL)); // Bei Fehler die Offline-Seite zeigen
+        .catch(() => {
+          // Netzwerkfehler (offline), Offline-Seite zeigen
+          return caches.match(OFFLINE_URL);
+        });
       
-      return response || fetchPromise; // Zuerst Cache, dann Netzwerk
+      return fetchPromise;
     })
   );
 });
