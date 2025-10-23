@@ -385,23 +385,21 @@
             if (!originalEditor) return;
             const codeToCopy = originalEditor.getValue();
             
-            // (Die folgende Zeile war in deiner Version abgeschnitten, 
-            // ich nehme an, sie sollte den Kopiervorgang starten)
-            if (!codeToCopy) {
+            // Ich habe den Kopiervorgang hier korrigiert, da er 
+            // in deiner Originaldatei unvollständig war.
+            if (codeToCopy) {
                 navigator.clipboard.writeText(codeToCopy).then(() => {
-                    // Erfolg (optional)
+                    console.log('Original-Code kopiert!');
                 }).catch(err => {
                     console.error('Fehler beim Kopieren', err);
                 });
             }
         });
-        
-        // (Hier endet der <script>-Block, der in deiner Datei abgeschnitten war)
     </script>
 
     <script>
         if ('serviceWorker' in navigator) {
-            // Der Pfad muss mit deinen anderen Dateien übereinstimmen
+            // Der Pfad ist '/Diff-Patch-Tool/sw.js', basierend auf deiner URL
             const serviceWorkerPath = '/Diff-Patch-Tool/sw.js'; 
             
             window.addEventListener('load', () => {
@@ -411,6 +409,14 @@
                     })
                     .catch(error => {
                         console.log('PWA Service Worker Registrierung fehlgeschlagen:', error);
+                    });
+            });
+        }
+    </script>
+
+</body>
+</html>
+
                     });
             });
         }
