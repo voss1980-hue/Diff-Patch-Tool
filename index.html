@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
     
     <meta name="theme-color" content="#1e40af">
-    
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -43,23 +43,12 @@
             opacity: 0;
             pointer-events: none;
         }
-        /* Die vom PWA-Studio eingefügten Stile sind hier zusammengefasst */
-        body {
-            -webkit-user-select:none;
-            -moz-user-select:none;
-            -ms-user-select:none;
-            user-select:none;
-        }
-        input, textarea, code { 
-            user-select: text !important; 
-            -webkit-user-select: text !important; 
-            -moz-user-select: text !important; 
-            -ms-user-select: text !important; 
-        }
+        body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;}
+        input, textarea, code { user-select: text !important; -webkit-user-select: text !important; -moz-user-select: text !important; -ms-user-select: text !important; }
     </style>
-    
-    <link rel="manifest" href="./manifest.json">
-
+  <link rel="manifest" href="./manifest.json">
+<style>body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;}</style>
+<style>input, textarea, code { user-select: text !important; -webkit-user-select: text !important; -moz-user-select: text !important; -ms-user-select: text !important; }</style>
 </head>
 <body class="bg-gray-900 text-white p-4 sm:p-6 md:p-8">
     
@@ -413,15 +402,7 @@
         });
     </script>
     
-    <footer style="text-align:center;padding:1.5rem;background-color:#1f2937;color:#d1d5db;font-size:0.75rem;"><p>Diff & Patch Tool</p><p>Entwickler: Björn Voss aka Omega</p><p><a href="mailto:voss.1980@gmail.com" style="color:#3b82f6;text-decoration:none;">voss.1980@gmail.com</a></p></footer>
-    
-    <button id="installFab" title="App installieren" style="display: none; position: fixed; bottom: 90px; right: 20px; width: 56px; height: 56px; background-color: #1e40af; color: white; border: none; border-radius: 50%; font-size: 24px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3); z-index: 1000; justify-content: center; align-items: center;">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-    </button>
-
-    
     <script>
-      // --- Service Worker & Update Logik ---
       if ('serviceWorker' in navigator) {
         const repoPath = '/Diff-Patch-Tool/';
         
@@ -429,6 +410,7 @@
           .then(registration => {
             console.log('Service Worker registered with scope:', registration.scope);
             
+            // Update-Logik
             registration.addEventListener('updatefound', () => {
               const newWorker = registration.installing;
               newWorker.addEventListener('statechange', () => {
@@ -444,6 +426,7 @@
           })
           .catch(err => console.error('SW registration failed:', err));
 
+        // Controller-Change-Logik
         let refreshing;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
           if (refreshing) return;
@@ -451,8 +434,15 @@
           window.location.reload();
         });
       }
+    </script>
 
-      // --- Install Button Logik ---
+    <footer style="text-align:center;padding:1.5rem;background-color:#1f2937;color:#d1d5db;font-size:0.75rem;"><p>Diff & Patch Tool</p><p>Entwickler: Björn Voss aka Omega</p><p><a href="mailto:voss.1980@gmail.com" style="color:#3b82f6;text-decoration:none;">voss.1980@gmail.com</a></p></footer>
+
+    <button id="installFab" title="App installieren" style="display: none; position: fixed; bottom: 90px; right: 20px; width: 56px; height: 56px; background-color: #1e40af; color: white; border: none; border-radius: 50%; font-size: 24px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3); z-index: 1000; justify-content: center; align-items: center;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+    </button>
+
+    <script>
       let deferredPrompt;
       const installButton = document.getElementById('installFab');
 
@@ -486,8 +476,7 @@
     </script>
 </body>
 </html>
-   const { outcome } = await deferredPrompt.userChoice;
-        console.log('User choice:', outcome);
+ole.log('User choice:', outcome);
         deferredPrompt = null;
       }
     });
