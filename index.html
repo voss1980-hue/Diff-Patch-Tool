@@ -11,16 +11,6 @@
     
     <meta name="theme-color" content="#1e40af">
 
-    <script>
-      const basePath = window.location.pathname.split('/').filter(Boolean)[0]
-                       ? '/' + window.location.pathname.split('/')[0] + '/'
-                       : '/';
-      const manifestLink = document.createElement('link');
-      manifestLink.rel = 'manifest';
-      manifestLink.href = basePath + 'manifest.json';
-      document.head.appendChild(manifestLink);
-    </script>
-    
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -411,22 +401,32 @@
             }
         });
     </script>
+    
     <script>
       if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('./sw.js').then(registration => {
-          registration.addEventListener('updatefound', () => {
-            const newWorker = registration.installing;
-            newWorker.addEventListener('statechange', () => {
-              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-                const bar = document.getElementById('updateSnackbar');
-                bar.classList.remove('hidden');
-                document.getElementById('reloadButton').addEventListener('click', () => {
-                  newWorker.postMessage({ type: 'SKIP_WAITING' });
-                });
-              }
+        const repoPath = '/Diff-Patch-Tool/';
+        
+        navigator.serviceWorker.register('./sw.js', { scope: repoPath })
+          .then(registration => {
+            console.log('Service Worker registered with scope:', registration.scope);
+            
+            // Update-Logik (von oben hierher kopiert)
+            registration.addEventListener('updatefound', () => {
+              const newWorker = registration.installing;
+              newWorker.addEventListener('statechange', () => {
+                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                  const bar = document.getElementById('updateSnackbar');
+                  bar.classList.remove('hidden');
+                  document.getElementById('reloadButton').addEventListener('click', () => {
+                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                  });
+                }
+              });
             });
-          });
-        });
+          })
+          .catch(err => console.error('SW registration failed:', err));
+
+        // Controller-Change-Logik (von oben hierher kopiert)
         let refreshing;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
           if (refreshing) return;
@@ -437,15 +437,6 @@
     </script>
 
 
-  <script>
-    if ('serviceWorker' in navigator) {
-      // KORREKTUR 2: Scope auf Repository-Pfad setzen
-      const repoPath = '/Diff-Patch-Tool/';
-      navigator.serviceWorker.register('./sw.js', { scope: repoPath })
-        .then((reg) => console.log('Service Worker registered:', reg.scope))
-        .catch(err => console.error('SW registration failed:', err));
-    }
-  </script>
 <footer style="text-align:center;padding:1.5rem;background-color:#1f2937;color:#d1d5db;font-size:0.75rem;"><p>Diff & Patch Tool</p><p>Entwickler: Björn Voss aka Omega</p><p><a href="mailto:voss.1980@gmail.com" style="color:#3b82f6;text-decoration:none;">voss.1980@gmail.com</a></p></footer>
 
 <button id="installFab" title="App installieren" style="display: none; position: fixed; bottom: 90px; right: 20px; width: 56px; height: 56px; background-color: #1e40af; color: white; border: none; border-radius: 50%; font-size: 24px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3); z-index: 1000; justify-content: center; align-items: center;">
@@ -469,6 +460,24 @@
       installButton.style.display = 'none';
       if (deferredPrompt) {
         deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log('User choice:', outcome);
+        deferredPrompt = null;
+      }
+    });
+  }
+
+  window.addEventListener('appinstalled', () => {
+     if (installButton) {
+        installButton.style.display = 'none';
+     }
+    deferredPrompt = null;
+    console.log('PWA wurde installiert');
+  });
+</script>
+</body>
+</html>
+();
         const { outcome } = await deferredPrompt.userChoice;
         console.log('User choice:', outcome);
         deferredPrompt = null;
