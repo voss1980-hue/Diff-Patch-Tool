@@ -10,7 +10,7 @@
     <script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.js"></script>
     
     <meta name="theme-color" content="#1e40af">
-
+    
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -402,7 +402,15 @@
         });
     </script>
     
+    <footer style="text-align:center;padding:1.5rem;background-color:#1f2937;color:#d1d5db;font-size:0.75rem;"><p>Diff & Patch Tool</p><p>Entwickler: Björn Voss aka Omega</p><p><a href="mailto:voss.1980@gmail.com" style="color:#3b82f6;text-decoration:none;">voss.1980@gmail.com</a></p></footer>
+    
+    <button id="installFab" title="App installieren" style="display: none; position: fixed; bottom: 90px; right: 20px; width: 56px; height: 56px; background-color: #1e40af; color: white; border: none; border-radius: 50%; font-size: 24px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3); z-index: 1000; justify-content: center; align-items: center;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+    </button>
+
+    
     <script>
+      // --- Service Worker & Update Logik ---
       if ('serviceWorker' in navigator) {
         const repoPath = '/Diff-Patch-Tool/';
         
@@ -410,85 +418,89 @@
           .then(registration => {
             console.log('Service Worker registered with scope:', registration.scope);
             
-            // Update-Logik
             registration.addEventListener('updatefound', () => {
               const newWorker = registration.installing;
               newWorker.addEventListener('statechange', () => {
                 if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
                   const bar = document.getElementById('updateSnackbar');
-                  bar.classList.remove('hidden');
-                  document.getElementById('reloadButton').addEventListener('click', () => {
-                    newWorker.postMessage({ type: 'SKIP_WAITING' });
-                  });
+                  // Null-Prüfung hinzugefügt
+                  if (bar) bar.classList.remove('hidden'); 
+                  const reloadBtn = document.getElementById('reloadButton');
+                  // Null-Prüfung hinzugefügt
+                  if (reloadBtn) {
+                      reloadBtn.addEventListener('click', () => {
+                        // Stelle sicher, dass newWorker noch existiert
+                        if (newWorker) {
+                            newWorker.postMessage({ type: 'SKIP_WAITING' });
+                        }
+                      });
+                  }
                 }
               });
             });
           })
           .catch(err => console.error('SW registration failed:', err));
 
-        // Controller-Change-Logik
         let refreshing;
         navigator.serviceWorker.addEventListener('controllerchange', () => {
           if (refreshing) return;
           refreshing = true;
           window.location.reload();
         });
+      } else {
+         console.log('Service Worker API not supported.');
       }
-    </script>
 
-    <footer style="text-align:center;padding:1.5rem;background-color:#1f2937;color:#d1d5db;font-size:0.75rem;"><p>Diff & Patch Tool</p><p>Entwickler: Björn Voss aka Omega</p><p><a href="mailto:voss.1980@gmail.com" style="color:#3b82f6;text-decoration:none;">voss.1980@gmail.com</a></p></footer>
-
-    <button id="installFab" title="App installieren" style="display: none; position: fixed; bottom: 90px; right: 20px; width: 56px; height: 56px; background-color: #1e40af; color: white; border: none; border-radius: 50%; font-size: 24px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3); z-index: 1000; justify-content: center; align-items: center;">
-      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-    </button>
-
-    <script>
+      // --- Install Button Logik ---
       let deferredPrompt;
       const installButton = document.getElementById('installFab');
 
       window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('beforeinstallprompt event fired');
         e.preventDefault();
         deferredPrompt = e;
+        // Null-Prüfung hinzugefügt
         if (installButton) {
           installButton.style.display = 'flex';
+        } else {
+          console.warn('Install button (installFab) not found when beforeinstallprompt fired.');
         }
       });
 
+      // Null-Prüfung hinzugefügt
       if (installButton) {
-        installButton.addEventListener('click', async () => {
-          installButton.style.display = 'none';
+        installButton.addEventListener('click', () => { // async entfernt
+          console.log('Install button clicked');
+          // Zusätzliche Null-Prüfung
+          if (installButton) {
+            installButton.style.display = 'none';
+          }
           if (deferredPrompt) {
             deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            console.log('User choice:', outcome);
-            deferredPrompt = null;
+            // Verarbeite das Promise von userChoice
+            deferredPrompt.userChoice.then((choiceResult) => {
+              console.log('User choice:', choiceResult.outcome);
+              deferredPrompt = null; // Setze erst nach der Entscheidung zurück
+            }).catch((error) => {
+              console.error('Error during userChoice:', error);
+              deferredPrompt = null; // Setze auch bei Fehler zurück
+            });
+          } else {
+            console.log('deferredPrompt was null when install button clicked.');
           }
         });
+      } else {
+          console.warn('Install button (installFab) not found in the DOM.');
       }
 
       window.addEventListener('appinstalled', () => {
+         console.log('PWA wurde installiert (appinstalled event)');
+         // Null-Prüfung hinzugefügt
          if (installButton) {
             installButton.style.display = 'none';
          }
         deferredPrompt = null;
-        console.log('PWA wurde installiert');
       });
     </script>
-</body>
-</html>
-ole.log('User choice:', outcome);
-        deferredPrompt = null;
-      }
-    });
-  }
-
-  window.addEventListener('appinstalled', () => {
-     if (installButton) {
-        installButton.style.display = 'none';
-     }
-    deferredPrompt = null;
-    console.log('PWA wurde installiert');
-  });
-</script>
 </body>
 </html>
