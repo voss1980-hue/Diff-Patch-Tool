@@ -1,6 +1,6 @@
 {
-  "name": "HTML Diff & Patch Werkzeug (Optimiert)",
-  "short_name": "Diff-Patch-Tool",
+  "name": "HTML Diff & Patch Tool",
+  "short_name": "Diff & Patch Tool",
   "start_url": "/Diff-Patch-Tool/",
   "display": "standalone",
   "description": "Erstellt mit PWA-Studio Pro.",
