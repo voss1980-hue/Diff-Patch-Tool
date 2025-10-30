@@ -49,6 +49,9 @@
   <link rel="manifest" href="./manifest.json">
 <style>body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;}</style>
 <style>input, textarea, code { user-select: text !important; -webkit-user-select: text !important; -moz-user-select: text !important; -ms-user-select: text !important; }</style>
+  <link rel="manifest" href="./manifest.json">
+<style>body{-webkit-user-select:none;-moz-user-select:none;-ms-user-select:none;user-select:none;}</style>
+<style>input, textarea, code { user-select: text !important; -webkit-user-select: text !important; -moz-user-select: text !important; -ms-user-select: text !important; }</style>
 </head>
 <body class="bg-gray-900 text-white p-4 sm:p-6 md:p-8">
     
@@ -502,5 +505,52 @@
         deferredPrompt = null;
       });
     </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      // KORREKTUR 2: Scope auf Repository-Pfad setzen
+      const repoPath = '/Diff-Patch-Tool/';
+      navigator.serviceWorker.register('./sw.js', { scope: repoPath })
+        .then((reg) => console.log('Service Worker registered:', reg.scope))
+        .catch(err => console.error('SW registration failed:', err));
+    }
+  </script>
+
+<button id="installFab" title="App installieren" style="display: none; position: fixed; bottom: 90px; right: 20px; width: 56px; height: 56px; background-color: #1e40af; color: white; border: none; border-radius: 50%; font-size: 24px; cursor: pointer; box-shadow: 0 4px 8px rgba(0,0,0,0.3); z-index: 1000; justify-content: center; align-items: center;">
+  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+</button>
+
+<script>
+  let deferredPrompt;
+  const installButton = document.getElementById('installFab');
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    if (installButton) {
+      installButton.style.display = 'flex';
+    }
+  });
+
+  if (installButton) {
+    installButton.addEventListener('click', async () => {
+      installButton.style.display = 'none';
+      if (deferredPrompt) {
+        deferredPrompt.prompt();
+        const { outcome } = await deferredPrompt.userChoice;
+        console.log('User choice:', outcome);
+        deferredPrompt = null;
+      }
+    });
+  }
+
+  window.addEventListener('appinstalled', () => {
+     if (installButton) {
+        installButton.style.display = 'none';
+     }
+    deferredPrompt = null;
+    console.log('PWA wurde installiert');
+  });
+</script>
 </body>
 </html>
